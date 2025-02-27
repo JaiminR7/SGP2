@@ -1,4 +1,5 @@
 # House Rental
+
 Overview
 This project is a House Rental System built using the MERN stack (MongoDB, Express, React, Node.js). The application provides a platform for users to list and rent houses, similar to Airbnb. The project allows property owners to post listings and renters to browse and book available properties based on various criteria.
 
