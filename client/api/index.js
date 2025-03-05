@@ -130,14 +130,14 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
-    const userDoc = await User.findOne({ email: email });  // Correct variable spelling
+    const userDoc = await User.findOne({ email: email });  
     if (userDoc) {
         const passOK=bcrypt.compareSync(password,userDoc.password);
         if(passOK)
         {
             jwt.sign({email:userDoc.email,id:userDoc._id},jwtSecret, {} ,(err,token)=>{
                 if(err)throw err;
-                req.cookie('token',token).json('pass ok');
+                req.cookie('token',token).json(userDoc);
             });
            
         }
