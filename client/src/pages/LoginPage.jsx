@@ -1,4 +1,4 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate , useNavigate} from "react-router-dom";
 import { useContext, useState } from "react";
 import axios from "axios";
 import { UserContext } from "../UserContext";
@@ -10,6 +10,8 @@ export default function LoginPage() {
   // const { setUser } = UseContext(UserContext);
   const { setUser } = useContext(UserContext);
 
+
+  const navigate = useNavigate();
   async function handleLoginSubmit(ev) {
     ev.preventDefault();
     try {
@@ -18,7 +20,7 @@ export default function LoginPage() {
       alert("login successfull");
       setRedirect(true);
     } catch (e) {
-      avigate("/login");
+      navigate("/login");
     }
   }
   if (redirect) {
