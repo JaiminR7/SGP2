@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt"); // Import bcrypt
 const User = require("./models/User.js");
 const cookieParser = require("cookie-parser");
+const imageDownloader=require('image-downloader');
 require("dotenv").config();
 
 mongoose.set("strictQuery", true); //added by chatgpt
@@ -15,6 +16,7 @@ const jwtSecret = "mnbvcxzasdfghjklpoiuytrewq";
 
 app.use(express.json());
 app.use(cookieParser());
+app.use('/uploads',express.static(__dirname+'/uploads'))
 app.use(
   cors({
     credentials: true,
@@ -71,43 +73,41 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if email and password are provided
     if (!email || !password) {
+      console.log("Missing email or password");
       return res.status(400).json("Please enter both email and password.");
     }
 
     const userDoc = await User.findOne({ email: email });
-
-    // If user is found
-    if (userDoc) {
-      // Compare the provided password with the hashed password in the database
-      const passOK = bcrypt.compareSync(password, userDoc.password);
-
-      // If password is correct
-      if (passOK) {
-        jwt.sign(
-          { email: userDoc.email, id: userDoc._id },
-          jwtSecret,
-          {}, // empty options object
-          (err, token) => {
-            if (err) throw err;
-            // Send token as a cookie along with user data in JSON response
-            res.cookie("token", token).json(userDoc);
-          }
-        );
-      } else {
-        // Password is incorrect
-        res.status(422).json("Invalid password. Please try again.");
-      }
-    } else {
-      // User not found
-      res.status(404).json("User not found. Please register.");
+    if (!userDoc) {
+      console.log("User not found");
+      return res.status(404).json("User not found. Please register.");
     }
+
+    const passOK = bcrypt.compareSync(password, userDoc.password);
+    if (!passOK) {
+      console.log("Invalid password");
+      return res.status(422).json("Invalid password. Please try again.");
+    }
+
+    jwt.sign(
+      { email: userDoc.email, id: userDoc._id },
+      jwtSecret,
+      {},
+      (err, token) => {
+        if (err) {
+          console.error("JWT sign error:", err);
+          return res.status(500).json("Login failed. Please try again later.");
+        }
+        res.cookie("token", token).json(userDoc);
+      }
+    );
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json("Login failed. Please try again later.");
   }
 });
+
 
 
 app.post('/logout', (req, res) => {
@@ -122,9 +122,13 @@ app.post('/logout', (req, res) => {
 
 app.get("/profile", (req, res) => {
   const { token } = req.cookies;
+  console.log('Token:', token);
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-      if (err) throw err;
+      if (err) {
+        console.error('JWT verification error:', err);
+        return res.json(null);
+      }
       const { name, email, _id } = await User.findById(userData.id);
       res.json({ name, email, _id });
     });
@@ -132,6 +136,20 @@ app.get("/profile", (req, res) => {
     res.json(null);
   }
 });
+
+
+app.post('/upload-by-link',async (req,res)=>{
+  const {link}=req.body;
+  const newName='photo' + Date.now() + '.jpg';
+ await imageDownloader.image({
+    url:link,
+    dest:__dirname + '/uploads' + newName,
+  });
+  res.json(newName);
+
+})
+
+
 app.listen(4000, () => {
   console.log("Server running on port 4000");
 });

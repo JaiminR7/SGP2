@@ -21,7 +21,7 @@ export default function Header() {
           />
         </svg>
 
-        <span className="font-bold text-xl">airdnd</span>
+        <span className="font-bold text-xl">Voyage</span>
       
       </Link>
       {/* Search bar */}
