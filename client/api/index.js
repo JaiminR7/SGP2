@@ -69,41 +69,94 @@ app.post("/register", async (req, res) => {
   }
 });
 //modified login logic
+// app.post("/login", async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     // Check if email and password are provided
+//     if (!email || !password) {
+//       return res.status(400).json("Please enter both email and password.");
+//     }
+
+//     const userDoc = await User.findOne({ email: email });
+
+//     // If user is found
+//     if (userDoc) {
+//       // Compare the provided password with the hashed password in the database
+//       const passOK = bcrypt.compareSync(password, userDoc.password);
+
+//       // If password is correct
+//       if (passOK) {
+//         jwt.sign(
+//           { email: userDoc.email, id: userDoc._id },
+//           jwtSecret,
+//           {}, // empty options object
+//           (err, token) => {
+//             if (err) throw err;
+//             // Send token as a cookie along with user data in JSON response
+//             res.cookie("token", token).json(userDoc);
+//           }
+//         );
+//       } else {
+//         // Password is incorrect
+//         res.status(422).json("Invalid password. Please try again.");
+//       }
+//     } else {
+//       // User not found
+//       res.status(404).json("User not found. Please register.");
+//     }
+//   } catch (error) {
+//     console.error("Login error:", error);
+//     res.status(500).json("Login failed. Please try again later.");
+//   }
+// });
+
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check if email and password are provided
     if (!email || !password) {
-      console.log("Missing email or password");
       return res.status(400).json("Please enter both email and password.");
     }
 
     const userDoc = await User.findOne({ email: email });
-    if (!userDoc) {
-      console.log("User not found");
-      return res.status(404).json("User not found. Please register.");
-    }
 
-    const passOK = bcrypt.compareSync(password, userDoc.password);
-    if (!passOK) {
-      console.log("Invalid password");
-      return res.status(422).json("Invalid password. Please try again.");
-    }
+    // If user is found
+    if (userDoc) {
+      // Compare the provided password with the hashed password in the database
+      const passOK = bcrypt.compareSync(password, userDoc.password);
 
-    jwt.sign(
-      { email: userDoc.email, id: userDoc._id },
-      jwtSecret,
-      {},
-      (err, token) => {
-        if (err) {
-          console.error("JWT sign error:", err);
-          return res.status(500).json("Login failed. Please try again later.");
-        }
-        res.cookie("token", token).json(userDoc);
+      // If password is correct
+      if (passOK) {
+        // Sign JWT token with user details
+        jwt.sign(
+          { email: userDoc.email, id: userDoc._id },
+          jwtSecret,
+          {}, // empty options object
+          (err, token) => {
+            if (err) {
+              console.error("JWT Signing Error:", err); // Log JWT error for debugging
+              return res.status(500).json("Token generation failed.");
+            }
+
+            // If no error, log the generated token
+            console.log("Generated JWT Token:", token);
+
+            // Send token as a cookie along with user data in JSON response
+            res.cookie("token", token).json(userDoc);
+          }
+        );
+      } else {
+        // Password is incorrect
+        res.status(422).json("Invalid password. Please try again.");
       }
-    );
+    } else {
+      // User not found
+      res.status(404).json("User not found. Please register.");
+    }
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Login error:", error); // Log login error
     res.status(500).json("Login failed. Please try again later.");
   }
 });
